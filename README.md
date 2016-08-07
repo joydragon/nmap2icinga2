@@ -3,6 +3,8 @@ This is a script to make the bulk import of a Nmap grepable output to the Icinga
 
 ## Port Discovery
 
-We have now only the port discovery part.
-
 Using only the port discovery capabilities of nmap (without the -sV flag) and the grepable flag (-oG), we can define the host for icinga2 with just one script.
+
+## Service Discovery
+
+If we now use the port discovery capabilities of nmap (the -sV flag) and the grepable flag (-oG), we can define the host for icinga2 with one script also, but changing the definition of the services.
