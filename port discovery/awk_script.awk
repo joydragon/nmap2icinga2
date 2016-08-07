@@ -1,3 +1,8 @@
+##
+# This script is part of the nmap2icinga2 script published on Github by JoyDragon, https://github.com/joydragon/nmap2icinga2/
+# Using MIT licence
+# Please don't remove this comments when using the script.
+
 BEGIN {FS="\t"}
 {
         ICINGA2 = 1;
