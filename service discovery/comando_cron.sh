@@ -7,8 +7,8 @@ DNS_SERVER=8.8.8.8 ## Use your own DNS server here
 
 # You can define multiple networks to scan, and configuring all the necesary parameters
 RED_10="10.10.255.1/24"
-ARCHIVO_RED_10=nmap_red_10_10_255_1.txt
-FINAL_ARCHIVO_RED_10=red_10_10_255.conf
+ARCHIVO_RED_10=nmap_red_10_0_0_1.txt
+FINAL_ARCHIVO_RED_10=red_10_0_0.conf
 
 # Command starts now
 echo "" >> $OUTPUT
