@@ -94,7 +94,7 @@ function check_if_ip_configured(){
 			fi
 		else
 			# Si la IP no esta arriba todos los puertos son nuevos:
-			NEW_PORTS=`xmlstarlet sel -t -m "/nmaprun/host[address/@addr='"$IP"']" -v "ports/port/@portid" nmap_output.xml`
+			NEW_PORTS=`xmlstarlet sel -t -m "/nmaprun/host[address/@addr='"$IP"']" -v "ports/port/@portid" $ARCHIVO_OUTPUT`
 			echo "This server is now UP!" >> $MAIN_OUTPUT
 			echo "$IP" >> $MAIN_OUTPUT
 			echo "You have ports that are new for the IP: $IP" >> $MAIN_OUTPUT
