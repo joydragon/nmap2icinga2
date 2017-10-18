@@ -12,11 +12,11 @@ script_user  ALL = NOPASSWD:/usr/bin/nmap,/usr/sbin/icinga2
 
 After the permissions setup you must run this script with just the one parameter:
 ```
-check_ip_range.sh <IP or Range>
+check_ip_range.sh -H <IP or Range>
 
-check_ip_range.sh 10.0.0.10
+check_ip_range.sh -H 10.0.0.10
 
-check_ip_range.sh 192.168.0.0/24
+check_ip_range.sh -H 192.168.0.0/24
 ```
 
 With that you'll have a lot of files running around
