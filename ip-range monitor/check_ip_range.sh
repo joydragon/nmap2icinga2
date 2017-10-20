@@ -83,11 +83,11 @@ function check_if_ip_configured(){
 
 	if [[ -n $OUT ]]; then
 		# Revisar si es que esta la IP en la configuracion actual
-		IS_CONF=`sudo icinga2 object list --name "$IP" --type "Host"`
+		IS_CONF=`icinga2 object list --name "$IP" --type "Host"`
 
 		if [[ -n $IS_CONF ]]; then
 			# Si la IP esta arriba y se tiene en la configuracion se sacan los puertos
-			sudo icinga2 object list --name "$IP" --type "Host" | grep ports  | sed -e "s/.*\[//" -e "s/\]//" -e "s/ //g" -e "s/\"//g" | tr "," "\n" > $TMP_P1
+			icinga2 object list --name "$IP" --type "Host" | grep ports  | sed -e "s/.*\[//" -e "s/\]//" -e "s/ //g" -e "s/\"//g" | tr "," "\n" > $TMP_P1
 			xmlstarlet sel -t -m "/nmaprun/host[address/@addr='"$IP"']" -m "ports/port[state/@state='open']" -v "@portid" -n $ARCHIVO_OUTPUT | grep -v "^$" > $TMP_P2
 
 			RES1=`diff $TMP_P1 $TMP_P2 | grep "^<" | sed -e "s/^<\s*//"`
@@ -136,7 +136,7 @@ function check_if_ip_configured(){
 			return 3
 		fi
 	else
-		IS_CONF=`sudo icinga2 object list --name "$IP" --type "Host"`
+		IS_CONF=`icinga2 object list --name "$IP" --type "Host"`
 		if [[ -n $IS_CONF ]]; then
 			echo "ERROR: The IP $IP is DOWN" >> $MAIN_OUTPUT
 			return 1
