@@ -23,9 +23,12 @@ while [[ $# -gt 0 ]]
 done
 
 TYPE=""
-MAIN_OUTPUT="/tmp/bash_output.log"
-LOG_OUTPUT="/tmp/nmap_output.log"
-ARCHIVO_OUTPUT="/tmp/nmap_output.xml"
+TMP_DIR="./"
+PORT_EXCEPTIONS=""
+HOSTS_NEW=0
+HOSTS_DIFF=0
+PORTS_NEW=0
+PORTS_MISS=0
 
 if [[ -z $IP ]]; then
 	echo "ERROR: There's no IP definition"
@@ -53,8 +56,8 @@ fi
 
 function check_if_ip_configured(){
 	local IP=$1
-	local TMP_P1="/tmp/p1.tmp"
-	local TMP_P2="/tmp/p2.tmp"
+	local TMP_P1="${TMP_DIR}p1-${IP}.tmp"
+	local TMP_P2="${TMP_DIR}p2-${IP}.tmp"
 
 	if [[ -z $IP ]]; then
 		echo "ERROR: No IP is defined" >> $MAIN_OUTPUT
@@ -65,12 +68,12 @@ function check_if_ip_configured(){
 
 	if [[ -n $OUT ]]; then
 		# Revisar si es que esta la IP en la configuracion actual
-		IS_CONF=`icinga2 object list --name "$IP" --type "Host"`
+		IS_CONF=`sudo icinga2 object list --name "$IP" --type "Host"`
 
 		if [[ -n $IS_CONF ]]; then
 			# Si la IP esta arriba y se tiene en la configuracion se sacan los puertos
-			icinga2 object list --name "$IP" --type "Host" | grep ports  | sed -e "s/.*\[//" -e "s/\]//" -e "s/ //g" -e "s/\"//g" | tr "," "\n" > $TMP_P1
-			xmlstarlet sel -t -m "/nmaprun/host[address/@addr='"$IP"']" -v "ports/port/@portid" $ARCHIVO_OUTPUT > $TMP_P2
+			sudo icinga2 object list --name "$IP" --type "Host" | grep ports  | sed -e "s/.*\[//" -e "s/\]//" -e "s/ //g" -e "s/\"//g" | tr "," "\n" > $TMP_P1
+			xmlstarlet sel -t -m "/nmaprun/host[address/@addr='"$IP"']" -m "ports/port[state/@state='open']" -v "@portid" -n $ARCHIVO_OUTPUT | grep -v "^$" > $TMP_P2
 
 			MISSING_PORTS=`diff $TMP_P1 $TMP_P2 | grep "^<" | sed -e "s/^<\s*//"`
 			NEW_PORTS=`diff $TMP_P1 $TMP_P2 | grep "^>" | sed -e "s/^>\s*//"`
@@ -81,12 +84,21 @@ function check_if_ip_configured(){
 				echo "CONGRATULATIONS! The IP $IP is correctly monitored" >> $MAIN_OUTPUT
 				return 0
 			elif [[ -z $NEW_PORTS ]]; then
+				PORTS_MISS=$((PORTS_DIFF + $(echo $MISSING_PORTS | wc -w)))
+
 				echo "You have ports that are now down for the IP: $IP" >> $MAIN_OUTPUT
 				echo "$MISSING_PORTS" >> $MAIN_OUTPUT
 			elif [[ -z $MISSING_PORTS ]]; then
+				HOSTS_DIFF=$((HOSTS_DIFF + 1))
+				PORTS_NEW=$((PORTS_NEW + $(echo $NEW_PORTS | wc -w)))
+
 				echo "You have ports that are new for the IP: $IP" >> $MAIN_OUTPUT
 				echo "$NEW_PORTS" >> $MAIN_OUTPUT
 			else
+				HOSTS_DIFF=$((HOSTS_DIFF+1))
+				PORTS_MISS=$((PORTS_DIFF + $(echo $MISSING_PORTS | wc -w)))
+				PORTS_NEW=$((PORTS_NEW + $(echo $NEW_PORTS | wc -w)))
+
 				echo "You have ports that are now down for the IP: $IP" >> $MAIN_OUTPUT
 				echo "$MISSING_PORTS" >> $MAIN_OUTPUT
 				echo "You have ports that are new for the IP: $IP" >> $MAIN_OUTPUT
@@ -94,7 +106,10 @@ function check_if_ip_configured(){
 			fi
 		else
 			# Si la IP no esta arriba todos los puertos son nuevos:
-			NEW_PORTS=`xmlstarlet sel -t -m "/nmaprun/host[address/@addr='"$IP"']" -v "ports/port/@portid" $ARCHIVO_OUTPUT`
+			NEW_PORTS=`xmlstarlet sel -t -m "/nmaprun/host[address/@addr='"$IP"']" -m "ports/port[state/@state='open']" -v "@portid" -n $ARCHIVO_OUTPUT | grep -v "^$"`
+			HOSTS_NEW=$((HOSTS_NEW+1))
+			PORTS_NEW=$((PORTS_NEW + $(echo $NEW_PORTS | wc -w)))
+
 			echo "This server is now UP!" >> $MAIN_OUTPUT
 			echo "$IP" >> $MAIN_OUTPUT
 			echo "You have ports that are new for the IP: $IP" >> $MAIN_OUTPUT
@@ -102,18 +117,24 @@ function check_if_ip_configured(){
 			return 3
 		fi
 	else
-		IS_CONF=`icinga2 object list --name "$IP" --type "Host"`
+		IS_CONF=`sudo icinga2 object list --name "$IP" --type "Host"`
 		if [[ -n $IS_CONF ]]; then
 			echo "ERROR: The IP $IP is DOWN" >> $MAIN_OUTPUT
 			return 1
 		else
-			echo "There's no server and there never was" >> $MAIN_OUTPUT
+			echo "There's no server and there never was on IP $IP" >> $MAIN_OUTPUT
 			return 0
 		fi
 	fi
 	return 2
 }
 
+MAIN_OUTPUT=`echo "${TMP_DIR}icinga2-monitor-log-"$(echo $IP | sha1sum - | sed -re 's/\s+-\s*//')`
+LOG_OUTPUT=`echo "${TMP_DIR}nmap-output-$(echo $IP | sha1sum - | sed -re 's/\s+-\s*//').log"`
+ARCHIVO_OUTPUT=`echo "${TMP_DIR}nmap-output-$(echo $IP | sha1sum - | sed -re 's/\s+-\s*//').xml"`
+if [ -f $MAIN_OUTPUT ];then
+	rm $MAIN_OUTPUT
+fi
 echo "Starting now: "$(date "+%Y-%m-%d %H:%M:%S") >> $MAIN_OUTPUT
 
 # Revisar si la IP esta arriba
@@ -163,5 +184,6 @@ rm -rf $ARCHIVO_OUTPUT $LOG_OUTPUT 2>/dev/null
 
 echo "" >> $MAIN_OUTPUT
 
-echo $msg
+#echo "$msg|'new_hosts'=$HOSTS_NEW 'modified_hosts'=$HOSTS_DIFF 'new_ports'=$PORTS_NEW 'missing_ports'=$PORTS_MISS"
+echo "$msg|'new_hosts'=$HOSTS_NEW;;;$HOSTS_NEW 'modified_hosts'=$HOSTS_DIFF;;;$HOSTS_DIFF 'new_ports'=$PORTS_NEW;;;$PORTS_NEW 'missing_ports'=$PORTS_MISS;;;$PORTS_MISS"
 exit $gstat
