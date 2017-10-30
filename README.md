@@ -14,5 +14,3 @@ If we now use the port discovery capabilities of nmap (the -sV flag) and the gre
 ## IP-Range Monitor
 
 This is the new script that should monitor an IP or a Range of IPs for any changes on the current status stored on the Icinga2 configuration.
-
-This scripts need access to the Icinga2 CLI https://www.icinga.com/docs/icinga2/latest/doc/11-cli-commands/
