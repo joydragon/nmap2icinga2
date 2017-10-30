@@ -155,9 +155,9 @@ function check_if_ip_configured(){
 	return 2
 }
 
-MAIN_OUTPUT=`echo "${TMP_DIR}icinga2-monitor-log-"$(echo $IP | sha1sum - | sed -re 's/\s+-\s*//')`
-LOG_OUTPUT=`echo "${TMP_DIR}nmap-output-$(echo $IP | sha1sum - | sed -re 's/\s+-\s*//').log"`
-ARCHIVO_OUTPUT=`echo "${TMP_DIR}nmap-output-$(echo $IP | sha1sum - | sed -re 's/\s+-\s*//').xml"`
+MAIN_OUTPUT=`echo "${TMP_DIR}icinga2-monitor-log-"$(echo $IP | sha256sum - | sed -re 's/\s+-\s*//')`
+LOG_OUTPUT=`echo "${TMP_DIR}nmap-output-$(echo $IP | sha256sum - | sed -re 's/\s+-\s*//').log"`
+ARCHIVO_OUTPUT=`echo "${TMP_DIR}nmap-output-$(echo $IP | sha256sum - | sed -re 's/\s+-\s*//').xml"`
 
 if [ -f $MAIN_OUTPUT ];then
 	rm $MAIN_OUTPUT
