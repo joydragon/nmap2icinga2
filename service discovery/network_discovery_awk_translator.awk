@@ -1,7 +1,8 @@
 BEGIN {FS="\t"}
 {
 	ICINGA2 = 1;
-	output_filename="processed.conf";
+	#output_filename="./processed.conf";
+	SNMP_SCRIPT="./network_discovery_snmp_script.sh"
 
 	# Here is the Host information
 	split($1,hosts," ");
@@ -50,7 +51,8 @@ BEGIN {FS="\t"}
 	delete switch_int
 	if ( os_short ~ /Switch/ ) {
 		#system("bash_snmp_int_discovery.sh " hosts[2])
-		cmd = "./bash_snmp_int_discovery.sh " hosts[2]
+		#cmd = "./network_discovery_snmp_script.sh"  hosts[2]
+		cmd = SNMP_SCRIPT " " hosts[2]
 		while ( ( cmd | getline result ) > 0 ) {
 			split(result,temp,";;")
 			switch_int[ temp[1] ] = temp[2]
